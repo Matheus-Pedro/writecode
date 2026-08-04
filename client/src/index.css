@@ -1,0 +1,93 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-ink-950 text-zinc-200 font-sans;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  ::selection {
+    background: rgba(139, 124, 246, 0.28);
+    color: #fff;
+  }
+
+  *:focus-visible {
+    outline: none;
+  }
+}
+
+@layer components {
+  /* Code cells */
+  .code-cell {
+    border-radius: 2px;
+    transition: color 120ms ease, background-color 120ms ease;
+  }
+  .code-cell.pending {
+    color: #52525b;
+  }
+  .code-cell.correct {
+    color: #f4f4f5;
+  }
+  .code-cell.wrong {
+    color: #f87171;
+    background: rgba(248, 113, 113, 0.12);
+  }
+  .code-cell.newline {
+    color: #3f3f46;
+    font-size: 0.82em;
+  }
+  .code-cell.correct.newline {
+    color: #71717a;
+  }
+  .code-cell.caret {
+    background: #8b7cf6;
+    color: #0a0a0c;
+    box-shadow: 0 0 0 1px rgba(139, 124, 246, 0.45);
+  }
+
+  /* Scrollbars */
+  .scroll-slim {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+  }
+  .scroll-slim::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scroll-slim::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scroll-slim::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  .scroll-slim::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.18);
+    background-clip: content-box;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

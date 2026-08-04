@@ -1,0 +1,64 @@
+import express from "express";
+import cors from "cors";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { LANGUAGES } from "./languages.js";
+import { githubRandom, githubFromRepo } from "./github.js";
+import { generateSnippet, aiConfigured } from "./ai.js";
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+app.get("/api/config", (_req, res) => {
+  res.json({ aiEnabled: aiConfigured(), languages: Object.keys(LANGUAGES) });
+});
+
+app.get("/api/github/random", async (req, res) => {
+  const { language } = req.query;
+  try {
+    res.json(await githubRandom(language));
+  } catch (e) {
+    res.status(502).json({ error: e.message });
+  }
+});
+
+app.get("/api/github/from-repo", async (req, res) => {
+  const { language, repo } = req.query;
+  const parts = String(repo || "")
+    .trim()
+    .split("/")
+    .filter(Boolean);
+  if (parts.length !== 2) {
+    return res.status(400).json({ error: "Formato de repositório inválido. Use owner/repo." });
+  }
+  try {
+    res.json(await githubFromRepo(language, parts[0], parts[1]));
+  } catch (e) {
+    res.status(502).json({ error: e.message });
+  }
+});
+
+app.post("/api/ai", async (req, res) => {
+  const { language, difficulty } = req.body || {};
+  if (!aiConfigured()) {
+    return res.status(400).json({ error: "Chave de IA não configurada. Defina OPENAI_API_KEY no servidor." });
+  }
+  try {
+    res.json(await generateSnippet(language, difficulty));
+  } catch (e) {
+    res.status(502).json({ error: e.message });
+  }
+});
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const dist = path.resolve(__dirname, "../../client/dist");
+app.use(express.static(dist));
+app.get(/^\/(?!api\/).*/, (_req, res) => {
+  res.sendFile(path.join(dist, "index.html"));
+});
+
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`Writecode server on http://localhost:${PORT}`);
+});

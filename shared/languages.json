@@ -1,0 +1,92 @@
+[
+  {
+    "id": "python",
+    "name": "Python",
+    "glyph": "Py",
+    "desc": "Funções, indentação e docstrings",
+    "extensions": ["py"],
+    "aiName": "Python",
+    "defaults": ["psf/requests", "pallets/flask", "tinydb/tinydb", "python/mypy"]
+  },
+  {
+    "id": "javascript",
+    "name": "JavaScript",
+    "glyph": "JS",
+    "desc": "Async, arrow functions e objetos",
+    "extensions": ["js", "mjs", "cjs"],
+    "aiName": "JavaScript",
+    "defaults": ["expressjs/express", "axios/axios", "lodash/lodash", "sindresorhus/got"]
+  },
+  {
+    "id": "csharp",
+    "name": "C#",
+    "glyph": "C#",
+    "desc": "Classes, namespaces e tipos",
+    "extensions": ["cs"],
+    "aiName": "C#",
+    "defaults": ["dotnet/efcore", "icsharpcode/ILSpy", "mono/mono", "dotnet/CommandLineUtils"]
+  },
+  {
+    "id": "c",
+    "name": "C",
+    "glyph": "C",
+    "desc": "Headers, structs e ponteiros",
+    "extensions": ["c", "h"],
+    "aiName": "C",
+    "defaults": ["git/git", "libuv/libuv", "curl/curl", "sqlite/sqlite"]
+  },
+  {
+    "id": "typescript",
+    "name": "TypeScript",
+    "glyph": "TS",
+    "desc": "Tipagem, interfaces e generics",
+    "extensions": ["ts", "tsx"],
+    "aiName": "TypeScript",
+    "defaults": ["microsoft/TypeScript", "type-challenges/type-challenges", "denoland/deno", "vitest-dev/vitest"]
+  },
+  {
+    "id": "go",
+    "name": "Go",
+    "glyph": "Go",
+    "desc": "Structs, goroutines e errors",
+    "extensions": ["go"],
+    "aiName": "Go",
+    "defaults": ["golang/go", "gin-gonic/gin", "grpc/grpc-go", "spf13/cobra"]
+  },
+  {
+    "id": "rust",
+    "name": "Rust",
+    "glyph": "Rs",
+    "desc": "Ownership, match e traits",
+    "extensions": ["rs"],
+    "aiName": "Rust",
+    "defaults": ["tokio-rs/tokio", "serde-rs/serde", "rayon-rs/rayon", "clap-rs/clap"]
+  },
+  {
+    "id": "ruby",
+    "name": "Ruby",
+    "glyph": "Rb",
+    "desc": "Métodos, blocos e gems",
+    "extensions": ["rb"],
+    "aiName": "Ruby",
+    "defaults": ["rails/rails", "ruby/ruby", "sinatra/sinatra", "rspec/rspec-core"]
+  },
+  {
+    "id": "php",
+    "name": "PHP",
+    "glyph": "PHP",
+    "desc": "Classes, arrays e funções",
+    "extensions": ["php"],
+    "aiName": "PHP",
+    "defaults": ["laravel/laravel", "php/php-src", "symfony/symfony", "composer/composer"]
+  },
+  {
+    "id": "java",
+    "name": "Java",
+    "glyph": "Java",
+    "desc": "Classes, métodos e genéricos",
+    "extensions": ["java"],
+    "aiName": "Java",
+    "defaults": ["junit-team/junit5", "square/okhttp", "google/guava", "mockito/mockito"]
+  }
+]
