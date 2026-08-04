@@ -57,6 +57,9 @@
     color: #0a0a0c;
     box-shadow: 0 0 0 1px rgba(139, 124, 246, 0.45);
   }
+  .code-cell.selected {
+    background: rgba(139, 124, 246, 0.28);
+  }
 
   /* Scrollbars */
   .scroll-slim {

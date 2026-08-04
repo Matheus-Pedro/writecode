@@ -21,6 +21,7 @@ export function TypingScreen({ language, snippet, onFinish, onChangeLanguage, on
   const target = snippet.code;
   const [typed, setTyped] = useState<string[]>([]);
   const [elapsed, setElapsed] = useState(0);
+  const [selected, setSelected] = useState(false);
   const startRef = useRef<number | null>(null);
   const doneRef = useRef(false);
   const caretRef = useRef<HTMLSpanElement | null>(null);
@@ -29,11 +30,25 @@ export function TypingScreen({ language, snippet, onFinish, onChangeLanguage, on
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (doneRef.current) return;
+
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "a") {
+        e.preventDefault();
+        setSelected((s) => !s);
+        return;
+      }
+
       if (e.ctrlKey || e.metaKey || e.altKey) return;
 
       if (e.key === "Backspace") {
         e.preventDefault();
         setTyped((t) => t.slice(0, -1));
+        return;
+      }
+
+      if (e.key === "Tab") {
+        e.preventDefault();
+        if (startRef.current === null) startRef.current = performance.now();
+        setTyped((t) => [...t, " ", " ", " ", " "]);
         return;
       }
 
@@ -141,13 +156,14 @@ export function TypingScreen({ language, snippet, onFinish, onChangeLanguage, on
             {started ? `${typed.length}/${target.length}` : "aguardando…"}
           </span>
         </div>
-        <CodeDisplay target={target} typed={typed} caretRef={caretRef} />
+        <CodeDisplay target={target} typed={typed} caretRef={caretRef} selected={selected} />
       </Card>
 
       <div className="flex items-center justify-between text-[11px] text-zinc-600">
         <span>
           <span className="font-mono">↵</span> nova linha&nbsp;&nbsp;·&nbsp;&nbsp;
           <span className="font-mono">·</span> espaço&nbsp;&nbsp;·&nbsp;&nbsp;
+          <span className="font-mono">⇥</span> 4 espaços&nbsp;&nbsp;·&nbsp;&nbsp;
           <span className="font-mono">⌫</span> backspace corrige
         </span>
         <span className="hidden sm:block">Caracteres vermelhos contam como erro</span>

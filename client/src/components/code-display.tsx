@@ -50,13 +50,15 @@ export function CodeDisplay({
   target,
   typed,
   caretRef,
+  selected,
 }: {
   target: string;
   typed: string[];
   caretRef?: RefObject<HTMLSpanElement | null>;
+  selected?: boolean;
 }) {
   const model = buildModel(target, typed);
-  const caretIndex = typed.length;
+  const caretIndex = selected ? -1 : typed.length;
 
   return (
     <pre className="scroll-slim max-h-[56vh] overflow-auto px-5 py-5 font-mono text-[14px] leading-[1.7]">
@@ -84,7 +86,8 @@ export function CodeDisplay({
                         : c.state === "correct"
                           ? "correct"
                           : "pending",
-                    c.isNewline && "newline"
+                    c.isNewline && "newline",
+                    selected && c.state === "correct" && "selected"
                   )}
                 >
                   {displayChar(c)}
