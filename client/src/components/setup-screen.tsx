@@ -134,7 +134,7 @@ export function SetupScreen({
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="text-[14px] font-medium text-zinc-100">{s.title}</span>
                 <span className="text-[12px] text-zinc-500">
-                  {s.id === "ai" && !aiEnabled ? "Requer OPENAI_API_KEY no servidor" : s.desc}
+                  {s.id === "ai" && !aiEnabled ? "Desativado — em breve" : s.desc}
                 </span>
               </span>
               <span

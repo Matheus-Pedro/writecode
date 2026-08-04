@@ -1,11 +1,11 @@
 import { LANGUAGES } from "./languages.js";
 import { normalize } from "./snippets.js";
 
-const BASE = (process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/$/, "");
-const MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
+const BASE = (process.env.LLM_BASE_URL || "https://api.openai.com/v1").replace(/\/$/, "");
+const MODEL = process.env.LLM_MODEL || "gpt-4o-mini";
 
 export function aiConfigured() {
-  return Boolean(process.env.OPENAI_API_KEY);
+  return Boolean(process.env.LLM_API_KEY);
 }
 
 const DIFFS = {
@@ -30,7 +30,7 @@ export async function generateSnippet(language, difficulty) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      Authorization: `Bearer ${process.env.LLM_API_KEY}`,
     },
     body: JSON.stringify({
       model: MODEL,

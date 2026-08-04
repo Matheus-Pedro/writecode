@@ -42,7 +42,7 @@ app.get("/api/github/from-repo", async (req, res) => {
 app.post("/api/ai", async (req, res) => {
   const { language, difficulty } = req.body || {};
   if (!aiConfigured()) {
-    return res.status(400).json({ error: "Chave de IA não configurada. Defina OPENAI_API_KEY no servidor." });
+    return res.status(400).json({ error: "LLM não configurado. Defina LLM_API_KEY." });
   }
   try {
     res.json(await generateSnippet(language, difficulty));
