@@ -53,5 +53,5 @@ export async function generateSnippet(language, difficulty) {
   if (!code) {
     throw new Error("A IA não retornou código.");
   }
-  return normalize(code);
+  return { code: normalize(code), source: "IA", path: null };
 }
