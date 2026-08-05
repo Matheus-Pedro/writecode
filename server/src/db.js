@@ -20,6 +20,19 @@ export async function initDb() {
         avatar_url TEXT,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
       );
+      CREATE TABLE IF NOT EXISTS results (
+        id BIGSERIAL PRIMARY KEY,
+        user_id BIGINT NOT NULL,
+        language TEXT,
+        source TEXT,
+        cpm DOUBLE PRECISION NOT NULL,
+        wpm DOUBLE PRECISION NOT NULL,
+        accuracy DOUBLE PRECISION NOT NULL,
+        errors INTEGER NOT NULL,
+        elapsed DOUBLE PRECISION NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS idx_results_user ON results(user_id);
     `);
     return;
   }
@@ -40,6 +53,19 @@ export async function initDb() {
     );
     CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email) WHERE email IS NOT NULL;
     CREATE UNIQUE INDEX IF NOT EXISTS idx_users_github ON users(github_id) WHERE github_id IS NOT NULL;
+    CREATE TABLE IF NOT EXISTS results (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      language TEXT,
+      source TEXT,
+      cpm REAL NOT NULL,
+      wpm REAL NOT NULL,
+      accuracy REAL NOT NULL,
+      errors INTEGER NOT NULL,
+      elapsed REAL NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_results_user ON results(user_id);
   `);
 }
 
@@ -116,4 +142,36 @@ export async function updateGithubUser(id, { githubLogin, avatarUrl, email }) {
     )
     .run(githubLogin, avatarUrl, email, Number(id));
   return sqlite.prepare("SELECT * FROM users WHERE id = ?").get(Number(id));
+}
+
+export async function createResult({ userId, language, source, cpm, wpm, accuracy, errors, elapsed }) {
+  if (isPg) {
+    const r = await pool.query(
+      `INSERT INTO results (user_id, language, source, cpm, wpm, accuracy, errors, elapsed)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING *`,
+      [userId, language, source, cpm, wpm, accuracy, errors, elapsed]
+    );
+    return r.rows[0];
+  }
+  const info = sqlite
+    .prepare(
+      `INSERT INTO results (user_id, language, source, cpm, wpm, accuracy, errors, elapsed)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    )
+    .run(userId, language, source, cpm, wpm, accuracy, errors, elapsed);
+  return { id: info.lastInsertRowid };
+}
+
+export async function listResults(userId, limit = 50) {
+  if (isPg) {
+    const r = await pool.query(
+      `SELECT * FROM results WHERE user_id = $1 ORDER BY id DESC LIMIT $2`,
+      [userId, limit]
+    );
+    return r.rows;
+  }
+  return sqlite
+    .prepare("SELECT * FROM results WHERE user_id = ? ORDER BY id DESC LIMIT ?")
+    .all(userId, limit);
 }

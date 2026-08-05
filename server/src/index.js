@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { LANGUAGES } from "./languages.js";
 import { githubRandom, githubFromRepo } from "./github.js";
 import { generateSnippet, aiConfigured } from "./ai.js";
-import { initDb } from "./db.js";
+import { initDb, createResult, listResults } from "./db.js";
 import authRouter, { requireAuth } from "./auth.js";
 
 await initDb();
@@ -62,6 +62,35 @@ app.post("/api/ai", requireAuth, async (req, res) => {
   } catch (e) {
     console.error(`[/api/ai] erro:`, e.message);
     res.status(502).json({ error: e.message });
+  }
+});
+
+app.post("/api/results", requireAuth, async (req, res) => {
+  const { language = null, source = null, cpm, wpm, accuracy, errors, elapsed } = req.body || {};
+  try {
+    const result = await createResult({
+      userId: req.user.id,
+      language: language ? String(language) : null,
+      source: source ? String(source) : null,
+      cpm: Number(cpm) || 0,
+      wpm: Number(wpm) || 0,
+      accuracy: Number(accuracy) || 0,
+      errors: Math.round(Number(errors)) || 0,
+      elapsed: Number(elapsed) || 0,
+    });
+    res.status(201).json({ result });
+  } catch (e) {
+    console.error(`[/api/results] erro:`, e.message);
+    res.status(500).json({ error: "Falha ao salvar o resultado." });
+  }
+});
+
+app.get("/api/results", requireAuth, async (req, res) => {
+  try {
+    res.json({ results: await listResults(req.user.id, 50) });
+  } catch (e) {
+    console.error(`[/api/results] erro:`, e.message);
+    res.status(500).json({ error: "Falha ao listar resultados." });
   }
 });
 

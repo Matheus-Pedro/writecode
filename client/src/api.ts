@@ -76,3 +76,34 @@ export function logout() {
 export function githubLoginUrl() {
   return "/api/auth/github";
 }
+
+export interface ResultRow {
+  id: number;
+  language: string | null;
+  source: string | null;
+  cpm: number;
+  wpm: number;
+  accuracy: number;
+  errors: number;
+  elapsed: number;
+  created_at: string;
+}
+
+export function saveResult(payload: {
+  language: string | null;
+  source: string | null;
+  cpm: number;
+  wpm: number;
+  accuracy: number;
+  errors: number;
+  elapsed: number;
+}) {
+  return request<{ result: ResultRow }>("/api/results", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getResults() {
+  return request<{ results: ResultRow[] }>("/api/results");
+}

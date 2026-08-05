@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { LANGUAGE_ORDER, LANGUAGES, deviconUrl } from "../languages.js";
 import { ChevronRight, Github, Search, Sparkle } from "./icons.jsx";
+import { AdUnit } from "./ad-unit.js";
 import { cn } from "../lib/utils.js";
 
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -125,6 +126,8 @@ export function HomeScreen({ onSelect }: { onSelect: (id: string) => void }) {
         <Sparkle className="size-3.5" />
         <span>ou gerados por IA</span>
       </motion.div>
+
+      <AdUnit slot="8429173150" className="mt-8" />
     </div>
   );
 }

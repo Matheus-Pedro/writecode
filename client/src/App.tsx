@@ -4,13 +4,14 @@ import { HomeScreen } from "./components/home-screen";
 import { SetupScreen } from "./components/setup-screen";
 import { TypingScreen } from "./components/typing-screen";
 import { ResultsScreen } from "./components/results-screen";
+import { HistoryScreen } from "./components/history-screen";
 import { LoginScreen } from "./components/login-screen";
 import { Logo } from "./components/motion";
-import { getConfig, getMe, logout, type SnippetData, type User } from "./api";
+import { getConfig, getMe, logout, saveResult, type SnippetData, type User } from "./api";
 import { Button } from "./components/ui/button";
 import type { Stats } from "./stats";
 
-type Phase = "home" | "setup" | "typing" | "results";
+type Phase = "home" | "setup" | "typing" | "results" | "history";
 
 const screenMotion = {
   initial: { opacity: 0, y: 6 },
@@ -59,6 +60,9 @@ export default function App() {
             <div className="flex items-center gap-2">
               {user ? (
                 <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="sm" onClick={() => setPhase("history")}>
+                    Histórico
+                  </Button>
                   {user.avatarUrl ? (
                     <img
                       src={user.avatarUrl}
@@ -126,10 +130,24 @@ export default function App() {
                   onFinish={(s) => {
                     setStats(s);
                     setPhase("results");
+                    if (user) {
+                      saveResult({
+                        language,
+                        source: snippet.source,
+                        cpm: s.cpm,
+                        wpm: s.wpm,
+                        accuracy: s.accuracy,
+                        errors: s.errors,
+                        elapsed: s.elapsed,
+                      }).catch(() => {});
+                    }
                   }}
                   onChangeLanguage={() => setPhase("home")}
                   onNewSnippet={() => setPhase("setup")}
                 />
+              )}
+              {phase === "history" && (
+                <HistoryScreen onBack={() => setPhase("home")} />
               )}
               {phase === "results" && snippet && stats && (
                 <ResultsScreen

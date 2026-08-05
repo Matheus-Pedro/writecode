@@ -5,6 +5,7 @@ import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Close, Restart, Shuffle } from "./icons";
+import { SharePanel } from "./share-panel";
 import type { SnippetData } from "../api";
 
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -37,7 +38,7 @@ export function ResultsScreen({
   const lang = LANGUAGES[language];
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col items-center pt-[12vh]">
+    <div className="mx-auto flex w-full max-w-lg flex-col items-center pt-[12vh]">
       <motion.div
         variants={container}
         initial="hidden"
@@ -92,6 +93,20 @@ export function ResultsScreen({
             {lang.glyph}
           </span>
           {lang.name} · {snippet.source}
+        </motion.div>
+
+        <motion.div variants={item} className="w-full">
+          <SharePanel
+            stats={{
+              wpm: stats.wpm,
+              accuracy: stats.accuracy,
+              errors: stats.errors,
+              elapsed: formatTime(stats.elapsed),
+              langName: lang.name,
+              icon: lang.icon,
+              url: window.location.origin,
+            }}
+          />
         </motion.div>
       </motion.div>
     </div>
