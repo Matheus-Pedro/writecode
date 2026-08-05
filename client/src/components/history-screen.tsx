@@ -60,6 +60,8 @@ export function HistoryScreen({ onBack }: { onBack: () => void }) {
                       className="size-5"
                       draggable={false}
                       loading="lazy"
+                      width={20}
+                      height={20}
                     />
                   ) : (
                     <span className="font-mono text-[12px] text-zinc-400">{r.language?.slice(0, 2) ?? "?"}</span>

@@ -79,6 +79,8 @@ export default function App() {
                       alt=""
                       className="size-6 rounded-full"
                       referrerPolicy="no-referrer"
+                      width={24}
+                      height={24}
                     />
                   ) : (
                     <span className="flex size-6 items-center justify-center rounded-full bg-white/[0.08] text-[10px] font-semibold text-zinc-300">

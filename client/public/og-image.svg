@@ -1,0 +1,31 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Writecode — Treino de digitação em código">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="0%" r="80%">
+      <stop offset="0%" stop-color="#8B7CF6" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#8B7CF6" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="textg" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F4F4F5"/>
+      <stop offset="100%" stop-color="#8B7CF6"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="#0A0A0C"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <rect width="1199" height="629" x="0.5" y="0.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.08" stroke-width="1"/>
+
+  <g font-family="ui-monospace, SFMono-Regular, Consolas, Menlo, monospace">
+    <rect x="80" y="170" width="72" height="72" rx="14" fill="#1E1E25" stroke="#8B7CF6" stroke-width="2"/>
+    <text x="116" y="220" font-size="42" font-weight="700" fill="#9C8FFB" text-anchor="middle">&gt;_</text>
+  </g>
+
+  <text x="180" y="228" font-family="Inter, Arial, sans-serif" font-size="64" font-weight="700" fill="url(#textg)">writecode</text>
+
+  <text x="80" y="360" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="500" fill="#E4E4E7">Treine sua digitação com código real</text>
+  <text x="80" y="412" font-family="Inter, Arial, sans-serif" font-size="26" font-weight="400" fill="#A1A1AA">Trechos do GitHub ou gerados por IA · PPM, precisão e XP</text>
+
+  <g font-family="ui-monospace, SFMono-Regular, Consolas, menlo, monospace">
+    <rect x="80" y="460" width="112" height="44" rx="8" fill="#8B7CF6"/>
+    <text x="136" y="489" font-size="20" font-weight="600" fill="#0A0A0C" text-anchor="middle">COMEÇAR</text>
+  </g>
+</svg>

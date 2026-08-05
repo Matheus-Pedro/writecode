@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { LANGUAGES } from "./languages.js";
@@ -103,10 +104,76 @@ app.get("/api/results", requireAuth, async (req, res) => {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dist = path.resolve(__dirname, "../../client/dist");
-app.use(express.static(dist));
-app.get(/^\/(?!api\/).*/, (_req, res) => {
-  res.sendFile(path.join(dist, "index.html"));
+
+const DEFAULT_SITE_URL = "https://writecode.example.com";
+function siteUrl() {
+  return (process.env.APP_URL || DEFAULT_SITE_URL).replace(/\/+$/, "");
+}
+
+// Carrega o HTML do index (do build ou, em dev, do fonte) para injetar o head SEO.
+let indexHtml = "";
+for (const p of [path.join(dist, "index.html"), path.resolve(__dirname, "../../client/index.html")]) {
+  try {
+    indexHtml = fs.readFileSync(p, "utf8");
+    break;
+  } catch {}
+}
+
+function seoHead() {
+  const base = siteUrl();
+  const image = `${base}/og-image.svg`;
+  return [
+    `<link rel="canonical" href="${base}/" />`,
+    `<meta property="og:url" content="${base}/" />`,
+    `<meta property="og:image" content="${image}" />`,
+    `<meta property="og:image:width" content="1200" />`,
+    `<meta property="og:image:height" content="630" />`,
+    `<meta property="og:image:alt" content="Writecode — Treino de digitação em código" />`,
+    `<meta name="twitter:image" content="${image}" />`,
+  ].join("\n    ");
+}
+
+function sendIndex(_req, res) {
+  res.type("html").send(indexHtml.replace("</head>", `${seoHead()}\n  </head>`));
+}
+
+app.get("/robots.txt", (_req, res) => {
+  res
+    .type("text/plain")
+    .send(["User-agent: *", "Allow: /", "Disallow: /api/", `Sitemap: ${siteUrl()}/sitemap.xml`].join("\n") + "\n");
 });
+
+app.get("/sitemap.xml", (_req, res) => {
+  const base = siteUrl();
+  res.type("application/xml").send(
+    `<?xml version="1.0" encoding="UTF-8"?>\n` +
+      `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+      `  <url>\n    <loc>${base}/</loc>\n    <changefreq>weekly</changefreq>\n    <priority>1.0</priority>\n  </url>\n` +
+      `</urlset>\n`
+  );
+});
+
+app.get("/", sendIndex);
+
+app.use(
+  express.static(dist, {
+    setHeaders(res, filePath) {
+      // Assets com hash no nome podem ser cacheados agressivamente.
+      if (filePath.includes(`${path.sep}assets${path.sep}`)) {
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      } else {
+        res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
+      }
+    },
+  })
+);
+app.get(/^\/(?!api\/).*/, sendIndex);
+
+if (!process.env.APP_URL) {
+  console.warn(
+    `[seo] APP_URL não definido; usando "${DEFAULT_SITE_URL}" para canonical/OG/sitemap. Definir APP_URL na produção.`
+  );
+}
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {

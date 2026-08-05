@@ -1,0 +1,19 @@
+{
+  "name": "Writecode — Treino de digitação em código",
+  "short_name": "Writecode",
+  "description": "Treine sua digitação com trechos reais de código de repositórios do GitHub ou gerados por IA.",
+  "lang": "pt-BR",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0A0A0C",
+  "theme_color": "#0A0A0C",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

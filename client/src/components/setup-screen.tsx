@@ -91,7 +91,7 @@ export function SetupScreen({
         </Button>
         <span className="ml-auto flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.02] py-1 pl-1 pr-2.5">
           <span className="flex size-5 items-center justify-center rounded-full bg-white/[0.06]">
-            <img src={deviconUrl(lang.icon)} alt="" className="size-3.5" draggable={false} />
+            <img src={deviconUrl(lang.icon)} alt="" className="size-3.5" draggable={false} width={14} height={14} />
           </span>
           <span className="text-[12px] font-medium text-zinc-300">{lang.name}</span>
         </span>

@@ -136,7 +136,7 @@ function LanguageRowContent({ lang }: { lang: { id: string; name: string; icon: 
   return (
     <>
       <span className="flex size-9 shrink-0 items-center justify-center rounded-sm border border-white/[0.08] bg-white/[0.02]">
-        <img src={deviconUrl(lang.icon)} alt="" className="size-5" draggable={false} loading="lazy" />
+        <img src={deviconUrl(lang.icon)} alt="" className="size-5" draggable={false} loading="lazy" width={20} height={20} />
       </span>
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="text-[14px] font-medium text-zinc-100">{lang.name}</span>
