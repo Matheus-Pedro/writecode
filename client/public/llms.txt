@@ -1,0 +1,41 @@
+# Writecode
+
+> Writecode é um treinador de digitação gratuito para programadores. Você escolhe uma linguagem de programação e pratica digitando trechos reais de código retirados de repositórios populares do GitHub ou gerados por IA, medindo velocidade (PPM e CPM), precisão, erros e tempo. Cada trecho concluído concede XP e contribui para o seu nível, com bônus diário para o primeiro treino do dia. Funciona direto no navegador, sem instalação.
+
+## O que é o Writecode
+
+- Site de treino de digitação focado em código, em português (pt-BR).
+- Trechos reais de código de repositórios populares do GitHub.
+- Geração de trechos por IA sob medida (opcional, requer conta gratuita).
+- Métricas por trecho: PPM, CPM, precisão, erros e tempo.
+- Sistema de níveis e XP com bônus diário.
+- Conta gratuita para salvar histórico de resultados.
+
+## Linguagens suportadas
+
+- Python
+- JavaScript
+- TypeScript
+- Go
+- Rust
+- Java
+- C#
+- C
+- PHP
+- Ruby
+
+## Como usar
+
+1. Abra o site: https://writecode.io
+2. Escolha uma linguagem de programação.
+3. Escolha a fonte do trecho: aleatório do GitHub, repositório específico (ex: psf/requests) ou IA.
+4. Digite o código com precisão e velocidade.
+5. Ao final, veja PPM, precisão, erros e o XP ganho.
+
+## Perguntas frequentes
+
+- Para quem é o Writecode? Para programadores de qualquer nível que querem digitar código mais rápido.
+- É gratuito? Sim.
+- Precisa instalar algo? Não, funciona no navegador.
+- Como o desempenho é medido? PPM (palavras por minuto), CPM, precisão e erros por trecho.
+- Como funciona o XP? Cada trecho concluído concede XP proporcional a CPM × precisão; o primeiro treino do dia tem bônus.

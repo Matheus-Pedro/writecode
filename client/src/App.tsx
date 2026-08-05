@@ -13,6 +13,12 @@ import type { Stats } from "./stats";
 
 type Phase = "home" | "setup" | "typing" | "results" | "history";
 
+declare global {
+  interface Window {
+    __WRITECODE_CONFIG__?: { aiEnabled: boolean; languages?: string[] };
+  }
+}
+
 const screenMotion = {
   initial: { opacity: 0, y: 6 },
   animate: { opacity: 1, y: 0 },
@@ -32,9 +38,14 @@ export default function App() {
   const [xpGain, setXpGain] = useState<{ xpEarned: number; bonus: number; level: LevelInfo } | null>(null);
 
   useEffect(() => {
-    getConfig()
-      .then((c) => setAiEnabled(Boolean(c.aiEnabled)))
-      .catch(() => setAiEnabled(false));
+    const cfg = window.__WRITECODE_CONFIG__;
+    if (cfg && Array.isArray(cfg.languages)) {
+      setAiEnabled(Boolean(cfg.aiEnabled));
+    } else {
+      getConfig()
+        .then((c) => setAiEnabled(Boolean(c.aiEnabled)))
+        .catch(() => setAiEnabled(false));
+    }
     getMe()
       .then((r) => setUser(r.user))
       .catch(() => setUser(null));

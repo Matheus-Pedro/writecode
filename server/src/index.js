@@ -119,6 +119,22 @@ for (const p of [path.join(dist, "index.html"), path.resolve(__dirname, "../../c
   } catch {}
 }
 
+// Otimizações de performance: embute o CSS de build e pré-carrega as fontes.
+let inlineCss = "";
+let fontPreloads = "";
+try {
+  const assetsDir = path.join(dist, "assets");
+  if (fs.existsSync(assetsDir)) {
+    const files = fs.readdirSync(assetsDir);
+    const cssFile = files.find((f) => f.startsWith("index-") && f.endsWith(".css"));
+    if (cssFile) inlineCss = fs.readFileSync(path.join(assetsDir, cssFile), "utf8");
+    fontPreloads = files
+      .filter((f) => f.endsWith(".woff2") && f.includes("-latin"))
+      .map((f) => `<link rel="preload" as="font" type="font/woff2" href="/assets/${f}" crossorigin />`)
+      .join("\n    ");
+  }
+} catch {}
+
 function seoHead() {
   const base = siteUrl();
   const image = `${base}/og-image.svg`;
@@ -134,7 +150,14 @@ function seoHead() {
 }
 
 function sendIndex(_req, res) {
-  res.type("html").send(indexHtml.replace("</head>", `${seoHead()}\n  </head>`));
+  const config = JSON.stringify({ aiEnabled: aiConfigured(), languages: Object.keys(LANGUAGES) });
+  const html = indexHtml
+    .replace(/<link rel="stylesheet"[^>]*>/, inlineCss ? `<style>${inlineCss}</style>` : "")
+    .replace(
+      "</head>",
+      `    ${seoHead()}\n    ${fontPreloads}\n    <script>window.__WRITECODE_CONFIG__ = ${config};</script>\n  </head>`
+    );
+  res.type("html").send(html);
 }
 
 app.get("/robots.txt", (_req, res) => {
