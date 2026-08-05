@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion, type Variants } from "framer-motion";
-import { LANGUAGE_ORDER, LANGUAGES } from "../languages.js";
+import { LANGUAGE_ORDER, LANGUAGES, deviconUrl } from "../languages.js";
 import { ChevronRight, Github, Search, Sparkle } from "./icons.jsx";
 import { cn } from "../lib/utils.js";
 
@@ -129,11 +129,11 @@ export function HomeScreen({ onSelect }: { onSelect: (id: string) => void }) {
   );
 }
 
-function LanguageRowContent({ lang }: { lang: { id: string; name: string; glyph: string; desc: string } }) {
+function LanguageRowContent({ lang }: { lang: { id: string; name: string; icon: string; desc: string } }) {
   return (
     <>
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-sm border border-white/[0.08] bg-white/[0.02] font-mono text-[13px] font-semibold text-zinc-300">
-        {lang.glyph}
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-sm border border-white/[0.08] bg-white/[0.02]">
+        <img src={deviconUrl(lang.icon)} alt="" className="size-5" draggable={false} loading="lazy" />
       </span>
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="text-[14px] font-medium text-zinc-100">{lang.name}</span>
