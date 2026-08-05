@@ -3,6 +3,7 @@ import { normalize } from "./snippets.js";
 
 const BASE = (process.env.LLM_BASE_URL || "https://api.openai.com/v1").replace(/\/$/, "");
 const MODEL = process.env.LLM_MODEL || "gpt-4o-mini";
+const TIMEOUT_MS = Number(process.env.LLM_TIMEOUT_MS || 45000);
 
 export function aiConfigured() {
   return Boolean(process.env.LLM_API_KEY);
@@ -38,6 +39,7 @@ export async function generateSnippet(language, difficulty) {
       temperature: 0.8,
       max_tokens: 2048,
     }),
+    signal: AbortSignal.timeout(TIMEOUT_MS),
   });
 
   if (!res.ok) {

@@ -60,6 +60,7 @@ app.post("/api/ai", requireAuth, async (req, res) => {
   try {
     res.json(await generateSnippet(language, difficulty));
   } catch (e) {
+    console.error(`[/api/ai] erro:`, e.message);
     res.status(502).json({ error: e.message });
   }
 });
