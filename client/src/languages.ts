@@ -17,7 +17,7 @@ interface LanguageSource extends LanguageDef {
 const source = raw as LanguageSource[];
 
 export const LANGUAGES: Record<string, LanguageDef> = Object.fromEntries(
-  source.map((l) => [{ id: l.id, name: l.name, glyph: l.glyph, icon: l.icon, desc: l.desc }])
+  source.map((l) => [l.id, { id: l.id, name: l.name, glyph: l.glyph, icon: l.icon, desc: l.desc }])
 );
 
 export const LANGUAGE_ORDER: string[] = source.map((l) => l.id);
