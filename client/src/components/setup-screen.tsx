@@ -40,12 +40,16 @@ const SOURCES: SourceDef[] = [
 export function SetupScreen({
   language,
   aiEnabled,
+  loggedIn,
   onBack,
+  onRequestLogin,
   onStart,
 }: {
   language: string;
   aiEnabled: boolean;
+  loggedIn: boolean;
   onBack: () => void;
+  onRequestLogin: () => void;
   onStart: (lang: string, snippet: SnippetData) => void;
 }) {
   const lang = LANGUAGES[language];
@@ -106,11 +110,18 @@ export function SetupScreen({
         {SOURCES.map((s) => {
           const Icon = s.icon;
           const disabled = s.id === "ai" && !aiEnabled;
+          const needsLogin = s.id === "ai" && aiEnabled && !loggedIn;
           const active = source === s.id;
           return (
             <button
               key={s.id}
-              onClick={() => !disabled && setSource(s.id)}
+              onClick={() => {
+                if (needsLogin) {
+                  onRequestLogin();
+                  return;
+                }
+                if (!disabled) setSource(s.id);
+              }}
               disabled={disabled}
               aria-pressed={active}
               className={[
@@ -134,7 +145,13 @@ export function SetupScreen({
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="text-[14px] font-medium text-zinc-100">{s.title}</span>
                 <span className="text-[12px] text-zinc-500">
-                  {s.id === "ai" && !aiEnabled ? "Desativado — em breve" : s.desc}
+                  {s.id === "ai"
+                    ? !aiEnabled
+                      ? "Desativado — em breve"
+                      : !loggedIn
+                        ? "Faça login para usar"
+                        : s.desc
+                    : s.desc}
                 </span>
               </span>
               <span
@@ -192,7 +209,7 @@ export function SetupScreen({
               </div>
             )}
 
-            {source === "ai" && aiEnabled && (
+            {source === "ai" && aiEnabled && loggedIn && (
               <div className="mt-4">
                 <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-[0.08em] text-zinc-500">
                   Dificuldade

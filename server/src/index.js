@@ -1,18 +1,31 @@
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { LANGUAGES } from "./languages.js";
 import { githubRandom, githubFromRepo } from "./github.js";
 import { generateSnippet, aiConfigured } from "./ai.js";
+import { initDb } from "./db.js";
+import authRouter, { requireAuth } from "./auth.js";
+
+await initDb();
 
 const app = express();
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.APP_URL || true,
+    credentials: true,
+  })
+);
 app.use(express.json());
+app.use(cookieParser());
 
-app.get("/api/config", (_req, res) => {
+app.get("/api/config", (req, res) => {
   res.json({ aiEnabled: aiConfigured(), languages: Object.keys(LANGUAGES) });
 });
+
+app.use("/api/auth", authRouter);
 
 app.get("/api/github/random", async (req, res) => {
   const { language } = req.query;
@@ -39,7 +52,7 @@ app.get("/api/github/from-repo", async (req, res) => {
   }
 });
 
-app.post("/api/ai", async (req, res) => {
+app.post("/api/ai", requireAuth, async (req, res) => {
   const { language, difficulty } = req.body || {};
   if (!aiConfigured()) {
     return res.status(400).json({ error: "LLM não configurado. Defina LLM_API_KEY." });

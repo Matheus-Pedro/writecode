@@ -9,6 +9,13 @@ export interface ApiConfig {
   languages: string[];
 }
 
+export interface User {
+  id: number;
+  email: string | null;
+  name: string | null;
+  avatarUrl: string | null;
+}
+
 async function request<T>(path: string, opts?: RequestInit): Promise<T> {
   const res = await fetch(path, {
     headers: { "Content-Type": "application/json" },
@@ -42,4 +49,30 @@ export function fetchAiSnippet(language: string, difficulty: string) {
     method: "POST",
     body: JSON.stringify({ language, difficulty }),
   });
+}
+
+export function getMe() {
+  return request<{ user: User | null }>("/api/auth/me");
+}
+
+export function register(email: string, password: string) {
+  return request<{ user: User }>("/api/auth/register", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+}
+
+export function login(email: string, password: string) {
+  return request<{ user: User }>("/api/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+}
+
+export function logout() {
+  return request<{ ok: boolean }>("/api/auth/logout", { method: "POST" });
+}
+
+export function githubLoginUrl() {
+  return "/api/auth/github";
 }

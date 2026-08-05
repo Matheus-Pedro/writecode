@@ -4,8 +4,10 @@ import { HomeScreen } from "./components/home-screen";
 import { SetupScreen } from "./components/setup-screen";
 import { TypingScreen } from "./components/typing-screen";
 import { ResultsScreen } from "./components/results-screen";
+import { LoginScreen } from "./components/login-screen";
 import { Logo } from "./components/motion";
-import { getConfig, type SnippetData } from "./api";
+import { getConfig, getMe, logout, type SnippetData, type User } from "./api";
+import { Button } from "./components/ui/button";
 import type { Stats } from "./stats";
 
 type Phase = "home" | "setup" | "typing" | "results";
@@ -20,6 +22,8 @@ const screenMotion = {
 export default function App() {
   const [phase, setPhase] = useState<Phase>("home");
   const [aiEnabled, setAiEnabled] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [showLogin, setShowLogin] = useState(false);
   const [language, setLanguage] = useState("");
   const [snippet, setSnippet] = useState<SnippetData | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -29,6 +33,9 @@ export default function App() {
     getConfig()
       .then((c) => setAiEnabled(Boolean(c.aiEnabled)))
       .catch(() => setAiEnabled(false));
+    getMe()
+      .then((r) => setUser(r.user))
+      .catch(() => setUser(null));
   }, []);
 
   function startTyping(lang: string, snip: SnippetData) {
@@ -47,8 +54,47 @@ export default function App() {
           className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(60%_100%_at_50%_0%,rgba(139,124,246,0.08),transparent)]"
         />
         <header className="relative z-10">
-          <div className="mx-auto flex h-14 w-full max-w-shell items-center px-6">
+          <div className="mx-auto flex h-14 w-full max-w-shell items-center justify-between px-6">
             <Logo />
+            <div className="flex items-center gap-2">
+              {user ? (
+                <div className="flex items-center gap-2">
+                  {user.avatarUrl ? (
+                    <img
+                      src={user.avatarUrl}
+                      alt=""
+                      className="size-6 rounded-full"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <span className="flex size-6 items-center justify-center rounded-full bg-white/[0.08] text-[10px] font-semibold text-zinc-300">
+                      {user.name?.slice(0, 1).toUpperCase() || "?"}
+                    </span>
+                  )}
+                  <span className="hidden max-w-[120px] truncate text-[12.5px] text-zinc-400 sm:inline">
+                    {user.name || user.email}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={async () => {
+                      try {
+                        await logout();
+                      } finally {
+                        setUser(null);
+                        setShowLogin(false);
+                      }
+                    }}
+                  >
+                    Sair
+                  </Button>
+                </div>
+              ) : (
+                <Button variant="secondary" size="sm" onClick={() => setShowLogin(true)}>
+                  Entrar
+                </Button>
+              )}
+            </div>
           </div>
         </header>
         <main className="relative z-10 pb-24">
@@ -66,7 +112,9 @@ export default function App() {
                 <SetupScreen
                   language={language}
                   aiEnabled={aiEnabled}
+                  loggedIn={Boolean(user)}
                   onBack={() => setPhase("home")}
+                  onRequestLogin={() => setShowLogin(true)}
                   onStart={startTyping}
                 />
               )}
@@ -99,6 +147,18 @@ export default function App() {
             </motion.div>
           </AnimatePresence>
         </main>
+
+        <AnimatePresence>
+          {showLogin && (
+            <LoginScreen
+              onClose={() => setShowLogin(false)}
+              onLoggedIn={(u) => {
+                setUser(u);
+                setShowLogin(false);
+              }}
+            />
+          )}
+        </AnimatePresence>
       </div>
     </MotionConfig>
   );
