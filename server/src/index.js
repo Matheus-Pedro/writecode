@@ -6,7 +6,8 @@ import { fileURLToPath } from "node:url";
 import { LANGUAGES } from "./languages.js";
 import { githubRandom, githubFromRepo } from "./github.js";
 import { generateSnippet, aiConfigured } from "./ai.js";
-import { initDb, createResult, listResults } from "./db.js";
+import { initDb, createResult, listResults, grantXp, hasResultToday } from "./db.js";
+import { levelInfo, xpForResult, DAILY_BONUS } from "./xp.js";
 import authRouter, { requireAuth } from "./auth.js";
 
 await initDb();
@@ -68,6 +69,9 @@ app.post("/api/ai", requireAuth, async (req, res) => {
 app.post("/api/results", requireAuth, async (req, res) => {
   const { language = null, source = null, cpm, wpm, accuracy, errors, elapsed } = req.body || {};
   try {
+    const baseXp = xpForResult({ cpm: Number(cpm) || 0, accuracy: Number(accuracy) || 0 });
+    const bonus = (await hasResultToday(req.user.id)) ? 0 : DAILY_BONUS;
+    const xpEarned = baseXp + bonus;
     const result = await createResult({
       userId: req.user.id,
       language: language ? String(language) : null,
@@ -77,8 +81,10 @@ app.post("/api/results", requireAuth, async (req, res) => {
       accuracy: Number(accuracy) || 0,
       errors: Math.round(Number(errors)) || 0,
       elapsed: Number(elapsed) || 0,
+      xp: xpEarned,
     });
-    res.status(201).json({ result });
+    const xp = await grantXp(req.user.id, xpEarned);
+    res.status(201).json({ result, xpEarned, bonus, level: levelInfo(xp) });
   } catch (e) {
     console.error(`[/api/results] erro:`, e.message);
     res.status(500).json({ error: "Falha ao salvar o resultado." });
@@ -87,7 +93,8 @@ app.post("/api/results", requireAuth, async (req, res) => {
 
 app.get("/api/results", requireAuth, async (req, res) => {
   try {
-    res.json({ results: await listResults(req.user.id, 50) });
+    const results = await listResults(req.user.id, 50);
+    res.json({ results, level: levelInfo(Number(req.user.xp || 0)) });
   } catch (e) {
     console.error(`[/api/results] erro:`, e.message);
     res.status(500).json({ error: "Falha ao listar resultados." });

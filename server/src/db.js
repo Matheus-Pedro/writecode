@@ -18,6 +18,7 @@ export async function initDb() {
         github_id TEXT UNIQUE,
         github_login TEXT,
         avatar_url TEXT,
+        xp INTEGER NOT NULL DEFAULT 0,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
       );
       CREATE TABLE IF NOT EXISTS results (
@@ -30,10 +31,19 @@ export async function initDb() {
         accuracy DOUBLE PRECISION NOT NULL,
         errors INTEGER NOT NULL,
         elapsed DOUBLE PRECISION NOT NULL,
+        xp INTEGER NOT NULL DEFAULT 0,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
       );
       CREATE INDEX IF NOT EXISTS idx_results_user ON results(user_id);
     `);
+    for (const [table, col] of [
+      ["users", "xp"],
+      ["results", "xp"],
+    ]) {
+      try {
+        await pool.query(`ALTER TABLE ${table} ADD COLUMN ${col} INTEGER NOT NULL DEFAULT 0`);
+      } catch {}
+    }
     return;
   }
   const { default: Database } = await import("better-sqlite3");
@@ -49,6 +59,7 @@ export async function initDb() {
       github_id TEXT,
       github_login TEXT,
       avatar_url TEXT,
+      xp INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
     CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email) WHERE email IS NOT NULL;
@@ -63,10 +74,19 @@ export async function initDb() {
       accuracy REAL NOT NULL,
       errors INTEGER NOT NULL,
       elapsed REAL NOT NULL,
+      xp INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
     CREATE INDEX IF NOT EXISTS idx_results_user ON results(user_id);
   `);
+  for (const stmt of [
+    `ALTER TABLE users ADD COLUMN xp INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE results ADD COLUMN xp INTEGER NOT NULL DEFAULT 0`,
+  ]) {
+    try {
+      sqlite.exec(stmt);
+    } catch {}
+  }
 }
 
 export async function findUserByEmail(email) {
@@ -144,22 +164,22 @@ export async function updateGithubUser(id, { githubLogin, avatarUrl, email }) {
   return sqlite.prepare("SELECT * FROM users WHERE id = ?").get(Number(id));
 }
 
-export async function createResult({ userId, language, source, cpm, wpm, accuracy, errors, elapsed }) {
+export async function createResult({ userId, language, source, cpm, wpm, accuracy, errors, elapsed, xp }) {
   if (isPg) {
     const r = await pool.query(
-      `INSERT INTO results (user_id, language, source, cpm, wpm, accuracy, errors, elapsed)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO results (user_id, language, source, cpm, wpm, accuracy, errors, elapsed, xp)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
-      [userId, language, source, cpm, wpm, accuracy, errors, elapsed]
+      [userId, language, source, cpm, wpm, accuracy, errors, elapsed, xp]
     );
     return r.rows[0];
   }
   const info = sqlite
     .prepare(
-      `INSERT INTO results (user_id, language, source, cpm, wpm, accuracy, errors, elapsed)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO results (user_id, language, source, cpm, wpm, accuracy, errors, elapsed, xp)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
-    .run(userId, language, source, cpm, wpm, accuracy, errors, elapsed);
+    .run(userId, language, source, cpm, wpm, accuracy, errors, elapsed, xp);
   return { id: info.lastInsertRowid };
 }
 
@@ -174,4 +194,32 @@ export async function listResults(userId, limit = 50) {
   return sqlite
     .prepare("SELECT * FROM results WHERE user_id = ? ORDER BY id DESC LIMIT ?")
     .all(userId, limit);
+}
+
+export async function grantXp(userId, amount) {
+  if (isPg) {
+    const r = await pool.query("UPDATE users SET xp = xp + $2 WHERE id = $1 RETURNING xp", [
+      Number(userId),
+      Math.round(amount),
+    ]);
+    return Number(r.rows[0]?.xp || 0);
+  }
+  sqlite.prepare("UPDATE users SET xp = xp + ? WHERE id = ?").run(Math.round(amount), Number(userId));
+  return Number(sqlite.prepare("SELECT xp FROM users WHERE id = ?").get(Number(userId))?.xp || 0);
+}
+
+export async function hasResultToday(userId) {
+  if (isPg) {
+    const r = await pool.query(
+      `SELECT to_char(created_at, 'YYYY-MM-DD') AS d
+         FROM results WHERE user_id = $1
+         ORDER BY created_at DESC LIMIT 1`,
+      [Number(userId)]
+    );
+    return r.rows[0]?.d === new Date().toISOString().slice(0, 10);
+  }
+  const row = sqlite
+    .prepare("SELECT date(created_at) AS d FROM results WHERE user_id = ? ORDER BY created_at DESC LIMIT 1")
+    .get(Number(userId));
+  return row?.d === new Date().toISOString().slice(0, 10);
 }

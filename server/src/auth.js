@@ -8,6 +8,7 @@ import {
   createUser,
   updateGithubUser,
 } from "./db.js";
+import { levelInfo } from "./xp.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "writecode-dev-secret-change-me";
 const COOKIE = "wc_token";
@@ -45,11 +46,14 @@ export async function currentUser(req) {
 }
 
 export function publicUser(u) {
+  const xp = Number(u.xp || 0);
   return {
     id: u.id,
     email: u.email || null,
     name: u.github_login || u.email?.split("@")[0] || null,
     avatarUrl: u.avatar_url || null,
+    xp,
+    level: levelInfo(xp).level,
   };
 }
 

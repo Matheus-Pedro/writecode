@@ -7,7 +7,7 @@ import { ResultsScreen } from "./components/results-screen";
 import { HistoryScreen } from "./components/history-screen";
 import { LoginScreen } from "./components/login-screen";
 import { Logo } from "./components/motion";
-import { getConfig, getMe, logout, saveResult, type SnippetData, type User } from "./api";
+import { getConfig, getMe, logout, saveResult, type SnippetData, type User, type LevelInfo } from "./api";
 import { Button } from "./components/ui/button";
 import type { Stats } from "./stats";
 
@@ -29,6 +29,7 @@ export default function App() {
   const [snippet, setSnippet] = useState<SnippetData | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [typingKey, setTypingKey] = useState(0);
+  const [xpGain, setXpGain] = useState<{ xpEarned: number; bonus: number; level: LevelInfo } | null>(null);
 
   useEffect(() => {
     getConfig()
@@ -63,6 +64,15 @@ export default function App() {
                   <Button variant="ghost" size="sm" onClick={() => setPhase("history")}>
                     Histórico
                   </Button>
+                  <span className="flex items-center gap-1.5 rounded-full border border-accent/25 bg-accent-soft px-2.5 py-1">
+                    <svg viewBox="0 0 24 24" className="size-3.5 text-accent" fill="currentColor" aria-hidden>
+                      <path d="M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5v-2l-10 5-10-5v2zm0-6 10 5 10-5" />
+                    </svg>
+                    <span className="font-mono text-[11.5px] font-semibold text-zinc-100">
+                      Lv {user.level}
+                    </span>
+                    <span className="font-mono text-[11.5px] text-zinc-500">{user.xp} XP</span>
+                  </span>
                   {user.avatarUrl ? (
                     <img
                       src={user.avatarUrl}
@@ -139,7 +149,14 @@ export default function App() {
                         accuracy: s.accuracy,
                         errors: s.errors,
                         elapsed: s.elapsed,
-                      }).catch(() => {});
+                      })
+                        .then((r) => {
+                          setXpGain({ xpEarned: r.xpEarned, bonus: r.bonus, level: r.level });
+                          setUser((u) =>
+                            u ? { ...u, xp: r.level.xp, level: r.level.level } : u
+                          );
+                        })
+                        .catch(() => {});
                     }
                   }}
                   onChangeLanguage={() => setPhase("home")}
@@ -154,6 +171,7 @@ export default function App() {
                   language={language}
                   snippet={snippet}
                   stats={stats}
+                  xpGain={xpGain}
                   onRetry={() => {
                     setTypingKey((k) => k + 1);
                     setPhase("typing");

@@ -24,6 +24,7 @@ export function ResultsScreen({
   language,
   snippet,
   stats,
+  xpGain,
   onRetry,
   onNewSnippet,
   onChangeLanguage,
@@ -31,6 +32,7 @@ export function ResultsScreen({
   language: string;
   snippet: SnippetData;
   stats: Stats;
+  xpGain?: { xpEarned: number; bonus: number; level: { level: number } } | null;
   onRetry: () => void;
   onNewSnippet: () => void;
   onChangeLanguage: () => void;
@@ -58,9 +60,26 @@ export function ResultsScreen({
           </span>
         </motion.div>
 
-        <motion.div variants={item} className="mt-3 text-[12px] text-zinc-600">
+        <motion.div variants={item} className="mt-4 text-[12px] text-zinc-600">
           {stats.total} caracteres · {formatTime(stats.elapsed)}
         </motion.div>
+
+        {xpGain && (
+          <motion.div variants={item} className="mt-4 w-full">
+            <div className="flex w-full items-center justify-center gap-2 rounded-lg border border-accent/25 bg-accent-soft px-3 py-2.5">
+              <svg viewBox="0 0 24 24" className="size-4 text-accent" fill="currentColor" aria-hidden>
+                <path d="M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5v-2l-10 5-10-5v2zm0-6 10 5 10-5" />
+              </svg>
+              <span className="font-mono text-[13px] font-semibold text-zinc-50">
+                +{xpGain.xpEarned} XP
+              </span>
+              {xpGain.bonus > 0 && (
+                <span className="text-[11px] text-zinc-400">(bônus diário +{xpGain.bonus})</span>
+              )}
+              <span className="ml-1 font-mono text-[11px] text-zinc-500">· Lv {xpGain.level.level}</span>
+            </div>
+          </motion.div>
+        )}
 
         <motion.div variants={item} className="mt-8 w-full">
           <Card className="grid grid-cols-2 overflow-hidden">

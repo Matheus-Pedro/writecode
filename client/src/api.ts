@@ -14,6 +14,16 @@ export interface User {
   email: string | null;
   name: string | null;
   avatarUrl: string | null;
+  xp: number;
+  level: number;
+}
+
+export interface LevelInfo {
+  level: number;
+  xp: number;
+  into: number;
+  needed: number;
+  progress: number;
 }
 
 async function request<T>(path: string, opts?: RequestInit): Promise<T> {
@@ -86,7 +96,15 @@ export interface ResultRow {
   accuracy: number;
   errors: number;
   elapsed: number;
+  xp: number;
   created_at: string;
+}
+
+export interface SaveResultResponse {
+  result: ResultRow;
+  xpEarned: number;
+  bonus: number;
+  level: LevelInfo;
 }
 
 export function saveResult(payload: {
@@ -98,12 +116,12 @@ export function saveResult(payload: {
   errors: number;
   elapsed: number;
 }) {
-  return request<{ result: ResultRow }>("/api/results", {
+  return request<SaveResultResponse>("/api/results", {
     method: "POST",
     body: JSON.stringify(payload),
   });
 }
 
 export function getResults() {
-  return request<{ results: ResultRow[] }>("/api/results");
+  return request<{ results: ResultRow[]; level: LevelInfo }>("/api/results");
 }
