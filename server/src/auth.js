@@ -40,6 +40,12 @@ export async function requireAuth(req, res, next) {
   next();
 }
 
+/** Define req.user se houver cookie válido; caso contrário segue sem autenticar. */
+export async function optionalAuth(req, _res, next) {
+  req.user = await userFromReq(req);
+  next();
+}
+
 export async function currentUser(req) {
   const user = await userFromReq(req);
   return user ? publicUser(user) : null;

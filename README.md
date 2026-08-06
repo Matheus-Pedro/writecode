@@ -10,6 +10,35 @@ Linguagens: **C#**, **Python**, **JavaScript**, **C**, **TypeScript**, **Go**, *
 - **Repositório específico** — digite `owner/repo` (ex: `psf/requests`) e um arquivo aleatório é escolhido.
 - **Gerado por IA** — gera um trecho sob demanda (requer `OPENAI_API_KEY`).
 
+## Desafios de lógica
+
+Modo de treino onde você **escreve uma função** e ela é executada no servidor contra casos de teste ocultos (passa/não passa). Acesse por **Desafios** no topo ou no botão da Home.
+
+- 8 desafios iniciais (soma, FizzBuzz, palíndromo, Fibonacci, vogais, maior do array, primo, inverter string) nas **10 linguagens** do app.
+- A execução roda em **sandbox local** (`server/src/executor.js`): o servidor compila/executa o código em diretório temporário com timeout, limite de memória virtual e sem acesso à rede.
+- O servidor **detecta os runtimes instalados** no SO em que roda (node, python3, gcc, dotnet, etc.) e expõe apenas as linguagens disponíveis — não depende de serviço externo (Piston).
+- Primeira resolução de um desafio concede XP (uma única vez por desafio por usuário; exige login).
+
+### Configuração do executor local
+
+Runtimes já presentes no Linux/WSL do projeto: **node**, **python3**, **gcc/g++**, **dotnet 9** e **TypeScript** (via `node_modules`). Para adicionar mais linguagens, instale o runtime no SO e ele passa a aparecer automaticamente:
+
+```bash
+sudo apt install -y ruby php golang default-jdk rustc   # ex.: mais linguagens
+```
+
+Limites opcionais no `server/.env`:
+
+```bash
+EXEC_RUN_TIMEOUT=8000        # ms por execução
+EXEC_COMPILE_TIMEOUT=20000   # ms para compilar (C, Go, etc.)
+EXEC_MEMORY_MB=512           # limite de memória virtual por processo
+```
+
+### Como adicionar um desafio
+
+Cada desafio vive em `server/src/challenges.js`: `id`, `título`, `dificuldade`, `xp`, `summary`, `description`, `starters` (código inicial por linguagem) e `tests` (`[{ args, expected }]`). O harness por linguagem (que monta o `main` e compara os resultados) também fica nesse arquivo.
+
 ## Como rodar
 
 ```bash

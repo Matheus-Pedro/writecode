@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { LANGUAGE_ORDER, LANGUAGES, deviconUrl } from "../languages.js";
-import { ChevronRight, Github, Search, Sparkle } from "./icons.jsx";
+import { ChevronRight, Github, Search, Sparkle, Terminal } from "./icons.jsx";
 import { AdUnit } from "./ad-unit.js";
 import { cn } from "../lib/utils.js";
 
@@ -19,7 +19,13 @@ const rowVariants: Variants = {
   exit: { opacity: 0, scale: 0.98, transition: { duration: 0.12 } },
 };
 
-export function HomeScreen({ onSelect }: { onSelect: (id: string) => void }) {
+export function HomeScreen({
+  onSelect,
+  onChallenges,
+}: {
+  onSelect: (id: string) => void;
+  onChallenges: () => void;
+}) {
   const [query, setQuery] = useState("");
   const many = LANGUAGE_ORDER.length >= MANY;
   const q = query.trim().toLowerCase();
@@ -37,6 +43,28 @@ export function HomeScreen({ onSelect }: { onSelect: (id: string) => void }) {
         many ? "max-w-xl pt-[8vh]" : "max-w-sm pt-[14vh]"
       )}
     >
+      <motion.button
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.32, ease, delay: 0.05 }}
+        onClick={onChallenges}
+        className="group mb-5 flex w-full items-center gap-3.5 rounded-md border border-accent/25 bg-accent-soft/40 px-4 py-3.5 text-left transition-colors duration-150 hover:border-accent/50 hover:bg-accent-soft"
+      >
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-sm border border-accent/30 bg-accent/15">
+          <Terminal className="size-4 text-accent" />
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="text-[14px] font-medium text-zinc-100">
+            Desafios de lógica <span className="text-accent">·</span>{" "}
+            <span className="text-accent">escreva o código e passe nos testes</span>
+          </span>
+          <span className="truncate text-[12px] text-zinc-500">
+            Soma, FizzBuzz, palíndromo, Fibonacci e mais — em 10 linguagens.
+          </span>
+        </span>
+        <ChevronRight className="size-4 shrink-0 text-accent transition-all duration-150 group-hover:translate-x-0.5" />
+      </motion.button>
+
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}

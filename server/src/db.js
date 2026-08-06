@@ -21,6 +21,14 @@ export async function initDb() {
         xp INTEGER NOT NULL DEFAULT 0,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
       );
+      CREATE TABLE IF NOT EXISTS challenge_solves (
+        id BIGSERIAL PRIMARY KEY,
+        user_id BIGINT NOT NULL,
+        challenge_id TEXT NOT NULL,
+        xp INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        UNIQUE (user_id, challenge_id)
+      );
       CREATE TABLE IF NOT EXISTS results (
         id BIGSERIAL PRIMARY KEY,
         user_id BIGINT NOT NULL,
@@ -64,6 +72,14 @@ export async function initDb() {
     );
     CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email) WHERE email IS NOT NULL;
     CREATE UNIQUE INDEX IF NOT EXISTS idx_users_github ON users(github_id) WHERE github_id IS NOT NULL;
+    CREATE TABLE IF NOT EXISTS challenge_solves (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      challenge_id TEXT NOT NULL,
+      xp INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_challenge_solves_user ON challenge_solves(user_id, challenge_id);
     CREATE TABLE IF NOT EXISTS results (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL,
@@ -222,4 +238,51 @@ export async function hasResultToday(userId) {
     .prepare("SELECT date(created_at) AS d FROM results WHERE user_id = ? ORDER BY created_at DESC LIMIT 1")
     .get(Number(userId));
   return row?.d === new Date().toISOString().slice(0, 10);
+}
+
+export async function hasSolvedChallenge(userId, challengeId) {
+  if (isPg) {
+    const r = await pool.query(
+      "SELECT 1 FROM challenge_solves WHERE user_id = $1 AND challenge_id = $2",
+      [Number(userId), String(challengeId)]
+    );
+    return Boolean(r.rows[0]);
+  }
+  return Boolean(
+    sqlite
+      .prepare("SELECT 1 FROM challenge_solves WHERE user_id = ? AND challenge_id = ?")
+      .get(Number(userId), String(challengeId))
+  );
+}
+
+export async function createChallengeSolve(userId, challengeId, xp) {
+  if (isPg) {
+    const r = await pool.query(
+      `INSERT INTO challenge_solves (user_id, challenge_id, xp)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (user_id, challenge_id) DO NOTHING
+       RETURNING *`,
+      [Number(userId), String(challengeId), Math.round(xp)]
+    );
+    return r.rows[0] || null;
+  }
+  const info = sqlite
+    .prepare("INSERT OR IGNORE INTO challenge_solves (user_id, challenge_id, xp) VALUES (?, ?, ?)")
+    .run(Number(userId), String(challengeId), Math.round(xp));
+  return info.changes > 0
+    ? { id: info.lastInsertRowid, user_id: Number(userId), challenge_id: String(challengeId) }
+    : null;
+}
+
+export async function listSolvedChallenges(userId) {
+  if (isPg) {
+    const r = await pool.query(
+      "SELECT challenge_id, xp, created_at FROM challenge_solves WHERE user_id = $1 ORDER BY id",
+      [Number(userId)]
+    );
+    return r.rows;
+  }
+  return sqlite
+    .prepare("SELECT challenge_id, xp, created_at FROM challenge_solves WHERE user_id = ? ORDER BY id")
+    .all(Number(userId));
 }

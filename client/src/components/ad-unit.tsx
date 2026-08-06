@@ -76,14 +76,18 @@ export function AdUnit({ slot, format = "auto", className }: Props) {
       };
     }
 
+    const rc = window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout?: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
     const idle =
-      "requestIdleCallback" in window
-        ? window.requestIdleCallback(show, { timeout: 2000 })
+      rc.requestIdleCallback
+        ? rc.requestIdleCallback(show, { timeout: 2000 })
         : window.setTimeout(show, 2000);
     return () => {
       cancelled = true;
-      if ("requestIdleCallback" in window) {
-        window.cancelIdleCallback(idle as number);
+      if (rc.cancelIdleCallback) {
+        rc.cancelIdleCallback(idle as number);
       } else {
         clearTimeout(idle as ReturnType<typeof setTimeout>);
       }

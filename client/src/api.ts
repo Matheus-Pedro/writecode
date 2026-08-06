@@ -125,3 +125,53 @@ export function saveResult(payload: {
 export function getResults() {
   return request<{ results: ResultRow[]; level: LevelInfo }>("/api/results");
 }
+
+export type ChallengeDifficulty = "easy" | "medium" | "hard";
+
+export interface ChallengeSummary {
+  id: string;
+  title: string;
+  difficulty: ChallengeDifficulty;
+  xp: number;
+  summary: string;
+  languages: string[];
+}
+
+export interface ChallengeDetail extends ChallengeSummary {
+  description: string;
+  testsCount: number;
+  starters: Record<string, string>;
+}
+
+export interface RunTest {
+  passed: boolean;
+  input?: unknown;
+  got?: string;
+  error?: string;
+}
+
+export interface RunResult {
+  status: "ok" | "compile_error" | "runtime_error" | "error";
+  passed: number;
+  total: number;
+  tests: RunTest[];
+  detail?: string;
+  xpEarned: number;
+  solved: boolean;
+  level: LevelInfo | null;
+}
+
+export function fetchChallengeList() {
+  return request<{ challenges: ChallengeSummary[] }>("/api/challenges");
+}
+
+export function fetchChallenge(id: string) {
+  return request<{ challenge: ChallengeDetail }>(`/api/challenges/${encodeURIComponent(id)}`);
+}
+
+export function runChallenge(id: string, payload: { language: string; code: string }) {
+  return request<RunResult>(`/api/challenges/${encodeURIComponent(id)}/run`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}

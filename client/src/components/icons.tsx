@@ -69,8 +69,9 @@ export function Close(props: IconProps) {
 }
 
 export function Loader(props: IconProps) {
+  const { className, ...rest } = props;
   return (
-    <svg {...base(props)} className="animate-spin" {...props}>
+    <svg {...base(rest)} className={["animate-spin", className].filter(Boolean).join(" ")}>
       <path d="M21 12a9 9 0 1 1-6.2-8.6" />
     </svg>
   );
@@ -116,6 +117,30 @@ export function Search(props: IconProps) {
     <svg {...base(props)}>
       <circle cx="11" cy="11" r="7" />
       <path d="M20 20l-3.5-3.5" />
+    </svg>
+  );
+}
+
+export function Play(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M7 5v14l11-7L7 5z" />
+    </svg>
+  );
+}
+
+export function Check(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M5 12l5 5L20 7" />
+    </svg>
+  );
+}
+
+export function X(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M6 6l12 12M18 6L6 18" />
     </svg>
   );
 }

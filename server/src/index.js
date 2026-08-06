@@ -7,9 +7,11 @@ import { fileURLToPath } from "node:url";
 import { LANGUAGES } from "./languages.js";
 import { githubRandom, githubFromRepo } from "./github.js";
 import { generateSnippet, aiConfigured } from "./ai.js";
-import { initDb, createResult, listResults, grantXp, hasResultToday } from "./db.js";
+import { listChallenges, challengeDetail, getChallenge, runChallenge } from "./challenges.js";
+import { status as executorStatus } from "./executor.js";
+import { initDb, createResult, listResults, grantXp, hasResultToday, hasSolvedChallenge, createChallengeSolve } from "./db.js";
 import { levelInfo, xpForResult, DAILY_BONUS } from "./xp.js";
-import authRouter, { requireAuth } from "./auth.js";
+import authRouter, { requireAuth, optionalAuth } from "./auth.js";
 
 await initDb();
 
@@ -25,6 +27,51 @@ app.use(cookieParser());
 
 app.get("/api/config", (req, res) => {
   res.json({ aiEnabled: aiConfigured(), languages: Object.keys(LANGUAGES) });
+});
+
+app.get("/api/challenges/status", async (_req, res) => {
+  res.json(await executorStatus());
+});
+
+app.get("/api/challenges", async (_req, res) => {
+  res.json({ challenges: await listChallenges() });
+});
+
+app.get("/api/challenges/:id", async (req, res) => {
+  const detail = await challengeDetail(req.params.id);
+  if (!detail) return res.status(404).json({ error: "Desafio não encontrado." });
+  res.json({ challenge: detail });
+});
+
+app.post("/api/challenges/:id/run", optionalAuth, async (req, res) => {
+  const challenge = await challengeDetail(req.params.id);
+  if (!challenge) return res.status(404).json({ error: "Desafio não encontrado." });
+  const { language, code } = req.body || {};
+  try {
+    const result = await runChallenge({ language, code, challenge: getChallenge(req.params.id) });
+    let xpEarned = 0;
+    let solved = false;
+    if (result.status === "ok" && result.total > 0 && result.passed === result.total && req.user) {
+      const already = await hasSolvedChallenge(req.user.id, challenge.id);
+      if (!already) {
+        const created = await createChallengeSolve(req.user.id, challenge.id, challenge.xp);
+        if (created) {
+          xpEarned = challenge.xp;
+          solved = true;
+          await grantXp(req.user.id, xpEarned);
+        }
+      }
+    }
+    let level = null;
+    if (req.user) {
+      const xp = Number(req.user.xp || 0) + (solved ? xpEarned : 0);
+      level = levelInfo(xp);
+    }
+    res.json({ ...result, xpEarned, solved, level });
+  } catch (e) {
+    console.error(`[/api/challenges/${req.params.id}/run] erro:`, e.message);
+    res.status(502).json({ error: e.message });
+  }
 });
 
 app.use("/api/auth", authRouter);

@@ -6,12 +6,15 @@ import { TypingScreen } from "./components/typing-screen";
 import { ResultsScreen } from "./components/results-screen";
 import { HistoryScreen } from "./components/history-screen";
 import { LoginScreen } from "./components/login-screen";
+import { ChallengeLanguagesScreen } from "./components/challenges-lang-screen";
+import { ChallengeRoadmapScreen } from "./components/challenges-roadmap-screen";
+import { ChallengeScreen } from "./components/challenge-screen";
 import { Logo } from "./components/motion";
 import { getConfig, getMe, logout, saveResult, type SnippetData, type User, type LevelInfo } from "./api";
 import { Button } from "./components/ui/button";
 import type { Stats } from "./stats";
 
-type Phase = "home" | "setup" | "typing" | "results" | "history";
+type Phase = "home" | "setup" | "typing" | "results" | "history" | "challenges" | "roadmap" | "challenge";
 
 declare global {
   interface Window {
@@ -36,6 +39,8 @@ export default function App() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [typingKey, setTypingKey] = useState(0);
   const [xpGain, setXpGain] = useState<{ xpEarned: number; bonus: number; level: LevelInfo } | null>(null);
+  const [challengeId, setChallengeId] = useState("");
+  const [challengeLang, setChallengeLang] = useState("");
 
   useEffect(() => {
     const cfg = window.__WRITECODE_CONFIG__;
@@ -70,6 +75,9 @@ export default function App() {
           <div className="mx-auto flex h-14 w-full max-w-shell items-center justify-between px-6">
             <Logo />
             <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setPhase("challenges")}>
+                Desafios
+              </Button>
               {user ? (
                 <div className="flex items-center gap-2">
                   <Button variant="ghost" size="sm" onClick={() => setPhase("history")}>
@@ -132,6 +140,36 @@ export default function App() {
                   onSelect={(id) => {
                     setLanguage(id);
                     setPhase("setup");
+                  }}
+                  onChallenges={() => setPhase("challenges")}
+                />
+              )}
+              {phase === "challenges" && (
+                <ChallengeLanguagesScreen
+                  onBack={() => setPhase("home")}
+                  onChoose={(lang) => {
+                    setChallengeLang(lang);
+                    setPhase("roadmap");
+                  }}
+                />
+              )}
+              {phase === "roadmap" && challengeLang && (
+                <ChallengeRoadmapScreen
+                  language={challengeLang}
+                  onBack={() => setPhase("challenges")}
+                  onOpen={(id) => {
+                    setChallengeId(id);
+                    setPhase("challenge");
+                  }}
+                />
+              )}
+              {phase === "challenge" && challengeId && (
+                <ChallengeScreen
+                  id={challengeId}
+                  initialLanguage={challengeLang}
+                  onBack={() => setPhase("roadmap")}
+                  onSolved={(_xp, level) => {
+                    setUser((u) => (u ? { ...u, xp: level.xp, level: level.level } : u));
                   }}
                 />
               )}
