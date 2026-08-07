@@ -269,7 +269,7 @@ export default function App() {
               {phase === "ranking" && <RankingScreen onBack={() => setPhase("home")} onOpenProfile={(ref) => { setProfileRef(ref); setPhase("profile"); }} />}
               {phase === "profile" && (
                 <ProfileScreen
-                  ref={profileRef}
+                  userKey={profileRef}
                   onBack={() => setPhase("home")}
                   onOpenRanking={() => setPhase("ranking")}
                 />

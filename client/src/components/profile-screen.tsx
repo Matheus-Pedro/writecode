@@ -17,22 +17,22 @@ import {
 import { cn } from "../lib/utils";
 
 interface Props {
-  ref: string | number;
+  userKey: string | number;
   onBack: () => void;
   onOpenRanking: () => void;
 }
 
-export function ProfileScreen({ ref, onBack, onOpenRanking }: Props) {
+export function ProfileScreen({ userKey, onBack, onOpenRanking }: Props) {
   const [data, setData] = useState<PublicProfile | null>(null);
   const [error, setError] = useState(false);
 
   useEffect(() => {
     setData(null);
     setError(false);
-    getPublicProfile(ref)
+    getPublicProfile(userKey)
       .then(setData)
       .catch(() => setError(true));
-  }, [ref]);
+  }, [userKey]);
 
   return (
     <PageShell>
