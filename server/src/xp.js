@@ -28,7 +28,11 @@ export const RESULT_ACCURACY_MAX = 1.0005; // fração, não percentual
 export const RESULT_ELAPSED_MIN = 0.2;
 export const RESULT_ELAPSED_MAX = 3600;
 export const CPM_WPM_TOLERANCE = 60; // |cpm - wpm*5| permitido (arredondamentos)
-// Teto de XP vindo de resultados por dia (antigrind; usuário legítimo não alcança).
+// Velocidade sustentada máxima plausível para um humano, em chars/seg.
+// Automatizar via navegador termina o trecho instantaneamente, muito abaixo disso.
+export const RESULT_MAX_CHARS_PER_SEC = 14; // ~168 PPM sustentado (artificial, acima de bots)
+export const RESULT_MAX_ELAPSED_SKEW = 2; // segundos extras aceitos além do tempo real de sessão
+// Teto de XP vindo de resultados por dia (anti grind; usuário legítimo não alcança).
 export const RESULT_DAILY_XP_CAP = 2000;
 // Rate limit por usuário em /api/results.
 export const RESULT_RATE_BURST = 6;

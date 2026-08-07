@@ -232,6 +232,8 @@ export default function App() {
                         accuracy: s.accuracy,
                         errors: s.errors,
                         elapsed: s.elapsed,
+                        sessionId: snippet.sessionId,
+                        length: s.total,
                       })
                         .then((r) => {
                           setXpGain({ xpEarned: r.xpEarned, bonus: r.bonus, level: r.level });

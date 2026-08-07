@@ -21,6 +21,8 @@ import {
   RESULT_DAILY_XP_CAP,
   RESULT_RATE_BURST,
   RESULT_RATE_WINDOW,
+  RESULT_MAX_CHARS_PER_SEC,
+  RESULT_MAX_ELAPSED_SKEW,
 } from "./xp.js";
 import authRouter, { requireAuth, publicUser } from "./auth.js";
 import {
@@ -47,6 +49,7 @@ import {
 } from "./db.js";
 import { createRoom, getRoom, joinRoom, updateProgress, completePlay, startRoom, playAgain, roomState, listPublicRooms } from "./rooms.js";
 import { listInterviewProblems, interviewSnippet, interviewLanguages } from "./interview.js";
+import { issueSession, consumeSession } from "./snippet-session.js";
 
 await initDb();
 
@@ -85,7 +88,8 @@ app.use("/api/auth", authRouter);
 app.get("/api/github/random", async (req, res) => {
   const { language } = req.query;
   try {
-    res.json(await githubRandom(language));
+    const snip = await githubRandom(language);
+    res.json({ ...snip, sessionId: issueSession(snip.code.length) });
   } catch (e) {
     res.status(502).json({ error: e.message });
   }
@@ -101,7 +105,8 @@ app.get("/api/github/from-repo", async (req, res) => {
     return res.status(400).json({ error: "Formato de repositório inválido. Use owner/repo." });
   }
   try {
-    res.json(await githubFromRepo(language, parts[0], parts[1]));
+    const snip = await githubFromRepo(language, parts[0], parts[1]);
+    res.json({ ...snip, sessionId: issueSession(snip.code.length) });
   } catch (e) {
     res.status(502).json({ error: e.message });
   }
@@ -113,7 +118,8 @@ app.post("/api/ai", requireAuth, async (req, res) => {
     return res.status(400).json({ error: "LLM não configurado. Defina LLM_API_KEY." });
   }
   try {
-    res.json(await generateSnippet(language, difficulty));
+    const snip = await generateSnippet(language, difficulty);
+    res.json({ ...snip, sessionId: issueSession(snip.code.length) });
   } catch (e) {
     console.error(`[/api/ai] erro:`, e.message);
     res.status(502).json({ error: e.message });
@@ -121,12 +127,23 @@ app.post("/api/ai", requireAuth, async (req, res) => {
 });
 
 app.post("/api/results", requireAuth, async (req, res) => {
-  const { language = null, source = null, cpm, wpm, accuracy, errors, elapsed } = req.body || {};
+  const {
+    language = null,
+    source = null,
+    cpm,
+    wpm,
+    accuracy,
+    errors,
+    elapsed,
+    sessionId = null,
+    length = null,
+  } = req.body || {};
   const c = Number(cpm) || 0;
   const w = Number(wpm) || 0;
   const a = Number(accuracy) || 0;
   const e = Number(elapsed) || 0;
   const err = Math.round(Number(errors)) || 0;
+  const typedLen = Math.round(Number(length)) || 0;
 
   // Validação de integridade: bloquear valores fabricados.
   if (
@@ -137,9 +154,28 @@ app.post("/api/results", requireAuth, async (req, res) => {
     e < RESULT_ELAPSED_MIN ||
     e > RESULT_ELAPSED_MAX ||
     err < 0 ||
+    typedLen < 0 ||
     (c > 0 && Math.abs(c - w * 5) > CPM_WPM_TOLERANCE)
   ) {
     return res.status(400).json({ error: "Resultado inválido." });
+  }
+
+  // Sessão de corrida: o trecho precisa ter sido emitido por este servidor.
+  const sess = consumeSession(sessionId, { length: typedLen });
+  if (!sess.ok) {
+    return res.status(400).json({ error: sess.error });
+  }
+  // Tempo plausível de parede desde a emissão do trecho.
+  if (sess.createdAt != null && e > (Date.now() - sess.createdAt) / 1000 + RESULT_MAX_ELAPSED_SKEW) {
+    return res.status(400).json({ error: "Tempo do resultado inconsistente com a sessão." });
+  }
+  // Não dá para digitar mais caracteres do que o trecho emitido tinha.
+  if (typedLen > sess.length) {
+    return res.status(400).json({ error: "Mais caracteres que o trecho emitido." });
+  }
+  // Velocidade humana plausível: um bot que lê o DOM termina instantaneamente.
+  if (sess.length > 0 && e < sess.length / RESULT_MAX_CHARS_PER_SEC) {
+    return res.status(400).json({ error: "Tempo irreal para o trecho digitado." });
   }
 
   // Rate limit por usuário.
@@ -407,7 +443,8 @@ app.get("/api/interview/problems", (req, res) => {
 app.get("/api/interview/snippet", (req, res) => {
   const { language, problem } = req.query;
   try {
-    res.json(interviewSnippet(language, problem));
+    const snip = interviewSnippet(language, problem);
+    res.json({ ...snip, sessionId: issueSession(snip.code.length) });
   } catch (e) {
     res.status(400).json({ error: e.message });
   }

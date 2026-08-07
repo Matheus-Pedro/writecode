@@ -2,6 +2,7 @@
   code: string;
   source: string;
   path: string | null;
+  sessionId: string;
 }
 
 export interface ApiConfig {
@@ -122,6 +123,8 @@ export function saveResult(payload: {
   accuracy: number;
   errors: number;
   elapsed: number;
+  sessionId?: string | null;
+  length?: number;
 }) {
   return request<SaveResultResponse>("/api/results", {
     method: "POST",
