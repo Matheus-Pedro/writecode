@@ -8,6 +8,7 @@ import { Card } from "./ui/card";
 import { ChevronLeft, Restart, Shuffle } from "./icons";
 import { cn } from "../lib/utils";
 import type { SnippetData } from "../api";
+import { session, resetSession, saveGhostTime } from "../session";
 
 interface Props {
   language: string;
@@ -15,9 +16,10 @@ interface Props {
   onFinish: (stats: Stats) => void;
   onChangeLanguage: () => void;
   onNewSnippet: () => void;
+  survival?: boolean;
 }
 
-export function TypingScreen({ language, snippet, onFinish, onChangeLanguage, onNewSnippet }: Props) {
+export function TypingScreen({ language, snippet, onFinish, onChangeLanguage, onNewSnippet, survival }: Props) {
   const target = snippet.code;
   const [typed, setTyped] = useState<string[]>([]);
   const [elapsed, setElapsed] = useState(0);
@@ -26,6 +28,20 @@ export function TypingScreen({ language, snippet, onFinish, onChangeLanguage, on
   const doneRef = useRef(false);
   const caretRef = useRef<HTMLSpanElement | null>(null);
   const lang = LANGUAGES[language];
+  const backRef = useRef(0);
+  const lastPushRef = useRef(0);
+
+  useEffect(() => {
+    session.snippetKey = `${snippet.source}::${snippet.path || ""}`;
+    session.linesTyped = snippet.code.split("\n").length;
+  }, [snippet]);
+
+  useEffect(() => {
+    resetSession();
+    return () => {
+      if (doneRef.current) saveGhostTime(target.length, (performance.now() - (startRef.current || performance.now())) / 1000);
+    };
+  }, []);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -41,6 +57,7 @@ export function TypingScreen({ language, snippet, onFinish, onChangeLanguage, on
 
       if (e.key === "Backspace") {
         e.preventDefault();
+        backRef.current += 1;
         setTyped((t) => t.slice(0, -1));
         return;
       }
@@ -48,7 +65,18 @@ export function TypingScreen({ language, snippet, onFinish, onChangeLanguage, on
       if (e.key === "Tab") {
         e.preventDefault();
         if (startRef.current === null) startRef.current = performance.now();
-        setTyped((t) => [...t, " ", " ", " ", " "]);
+        setTyped((t) => {
+          if (t.length >= target.length) return t;
+          let spaces = 0;
+          while (
+            t.length + spaces < target.length &&
+            (target[t.length + spaces] === " " || target[t.length + spaces] === "\t")
+          ) {
+            spaces++;
+          }
+          if (spaces === 0) return t;
+          return [...t, ...target.slice(t.length, t.length + spaces)];
+        });
         return;
       }
 
@@ -83,18 +111,45 @@ export function TypingScreen({ language, snippet, onFinish, onChangeLanguage, on
       const secs = (performance.now() - startRef.current) / 1000;
       setElapsed(secs);
       onFinish(buildStats(typed, target, secs));
+    } else if (survival && typed.length > 0 && startRef.current !== null && !doneRef.current) {
+      let wrong = 0;
+      for (let i = 0; i < typed.length; i++) if (typed[i] !== target[i]) wrong++;
+      if (wrong > 0) {
+        doneRef.current = true;
+        const secs = (performance.now() - startRef.current) / 1000;
+        setElapsed(secs);
+        onFinish(buildStats(typed, target, secs));
+      }
     }
-  }, [typed, target, onFinish]);
+  }, [typed, target, onFinish, survival]);
 
   useEffect(() => {
     caretRef.current?.scrollIntoView({ block: "nearest", inline: "nearest" });
   }, [typed.length]);
 
+  useEffect(() => {
+    if (startRef.current === null || doneRef.current) return;
+    const now = (performance.now() - startRef.current) / 1000;
+    if (now - lastPushRef.current < 0.1) return;
+    lastPushRef.current = now;
+    const s = buildStats(typed, target, now);
+    session.frames.push({ t: now, chars: typed.length, errors: s.errors, wpm: s.wpm, backspaces: backRef.current });
+    for (let i = 0; i < typed.length; i++) {
+      if (typed[i] !== target[i]) {
+        const ch = typed[i] === "\n" ? "↵" : typed[i];
+        session.wrongKeys[ch] = (session.wrongKeys[ch] || 0) + 1;
+      }
+    }
+  }, [typed, target]);
+
   function reset() {
     doneRef.current = false;
     startRef.current = null;
+    backRef.current = 0;
     setTyped([]);
     setElapsed(0);
+    session.frames = [];
+    session.wrongKeys = {};
   }
 
   const stats = buildStats(typed, target, elapsed);

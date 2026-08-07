@@ -6,6 +6,7 @@ import { Card } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Close, Restart, Shuffle } from "./icons";
 import { SharePanel } from "./share-panel";
+import { ReplayPanel } from "./replay-panel";
 import type { SnippetData } from "../api";
 
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -107,14 +108,18 @@ export function ResultsScreen({
           </div>
         </motion.div>
 
-        <motion.div variants={item} className="mt-8 flex items-center gap-2 text-[11px] text-zinc-600">
+        <motion.div variants={item} className="mt-6 flex items-center gap-2 text-[11px] text-zinc-600">
           <span className="flex size-5 items-center justify-center rounded-sm border border-white/[0.08] bg-white/[0.02] font-mono text-[10px] font-semibold text-zinc-400">
             {lang.glyph}
           </span>
           {lang.name} · {snippet.source}
         </motion.div>
 
-        <motion.div variants={item} className="w-full">
+        <motion.div variants={item} className="mt-6 w-full">
+          <ReplayPanel />
+        </motion.div>
+
+        <motion.div variants={item} className="mt-6 w-full">
           <SharePanel
             stats={{
               wpm: stats.wpm,

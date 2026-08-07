@@ -7,6 +7,7 @@ import {
   findUserById,
   createUser,
   updateGithubUser,
+  updateUserName,
 } from "./db.js";
 import { levelInfo } from "./xp.js";
 
@@ -50,7 +51,7 @@ export function publicUser(u) {
   return {
     id: u.id,
     email: u.email || null,
-    name: u.github_login || u.email?.split("@")[0] || null,
+    name: u.name || u.github_login || u.email?.split("@")[0] || null,
     avatarUrl: u.avatar_url || null,
     xp,
     level: levelInfo(xp).level,
@@ -107,6 +108,15 @@ router.post("/logout", (req, res) => {
 router.get("/me", async (req, res) => {
   const user = await userFromReq(req);
   res.json({ user: user ? publicUser(user) : null });
+});
+
+router.patch("/me", requireAuth, async (req, res) => {
+  const name = String(req.body?.name || "").trim();
+  if (!name) {
+    return res.status(400).json({ error: "Informe um nome." });
+  }
+  const user = await updateUserName(req.user.id, name);
+  res.json({ user: publicUser(user) });
 });
 
 router.get("/github", (req, res) => {
