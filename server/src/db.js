@@ -294,6 +294,23 @@ export async function hasResultToday(userId) {
   return row?.d === new Date().toISOString().slice(0, 10);
 }
 
+export async function xpEarnedToday(userId) {
+  if (isPg) {
+    const r = await pool.query(
+      `SELECT COALESCE(SUM(xp), 0) AS s FROM results
+       WHERE user_id = $1 AND created_at >= $2`,
+      [Number(userId), new Date().toISOString().slice(0, 10)]
+    );
+    return Number(r.rows[0]?.s || 0);
+  }
+  const row = sqlite
+    .prepare(
+      "SELECT COALESCE(SUM(xp), 0) AS s FROM results WHERE user_id = ? AND date(created_at) = date('now')"
+    )
+    .get(Number(userId));
+  return Number(row?.s || 0);
+}
+
 export async function getDailySolve(userId, day) {
   if (isPg) {
     const r = await pool.query("SELECT * FROM daily_solves WHERE user_id = $1 AND day = $2", [

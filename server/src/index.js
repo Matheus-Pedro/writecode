@@ -7,8 +7,21 @@ import { fileURLToPath } from "node:url";
 import { LANGUAGES } from "./languages.js";
 import { githubRandom, githubFromRepo } from "./github.js";
 import { generateSnippet, aiConfigured } from "./ai.js";
-import { initDb, createResult, listResults, grantXp, hasResultToday } from "./db.js";
-import { levelInfo, xpForResult, DAILY_BONUS } from "./xp.js";
+import { initDb, createResult, listResults, grantXp, hasResultToday, xpEarnedToday } from "./db.js";
+import {
+  levelInfo,
+  xpForResult,
+  DAILY_BONUS,
+  RESULT_CPM_MAX,
+  RESULT_WPM_MAX,
+  RESULT_ACCURACY_MAX,
+  RESULT_ELAPSED_MIN,
+  RESULT_ELAPSED_MAX,
+  CPM_WPM_TOLERANCE,
+  RESULT_DAILY_XP_CAP,
+  RESULT_RATE_BURST,
+  RESULT_RATE_WINDOW,
+} from "./xp.js";
 import authRouter, { requireAuth, publicUser } from "./auth.js";
 import {
   dayKey,
@@ -36,6 +49,22 @@ import { createRoom, getRoom, joinRoom, updateProgress, completePlay, startRoom,
 import { listInterviewProblems, interviewSnippet, interviewLanguages } from "./interview.js";
 
 await initDb();
+
+// Rate limit em memória por usuário (janela deslizante).
+const rateBuckets = new Map();
+function rateLimited(key, userId, burst, windowSec) {
+  const k = `${key}:${userId}`;
+  const now = Date.now() / 1000;
+  const arr = rateBuckets.get(k) || [];
+  while (arr.length && now - arr[0] > windowSec) arr.shift();
+  if (arr.length >= burst) {
+    rateBuckets.set(k, arr);
+    return true;
+  }
+  arr.push(now);
+  rateBuckets.set(k, arr);
+  return false;
+}
 
 const app = express();
 app.use(
@@ -93,19 +122,47 @@ app.post("/api/ai", requireAuth, async (req, res) => {
 
 app.post("/api/results", requireAuth, async (req, res) => {
   const { language = null, source = null, cpm, wpm, accuracy, errors, elapsed } = req.body || {};
+  const c = Number(cpm) || 0;
+  const w = Number(wpm) || 0;
+  const a = Number(accuracy) || 0;
+  const e = Number(elapsed) || 0;
+  const err = Math.round(Number(errors)) || 0;
+
+  // Validação de integridade: bloquear valores fabricados.
+  if (
+    c > RESULT_CPM_MAX ||
+    w > RESULT_WPM_MAX ||
+    a < 0 ||
+    a > RESULT_ACCURACY_MAX ||
+    e < RESULT_ELAPSED_MIN ||
+    e > RESULT_ELAPSED_MAX ||
+    err < 0 ||
+    (c > 0 && Math.abs(c - w * 5) > CPM_WPM_TOLERANCE)
+  ) {
+    return res.status(400).json({ error: "Resultado inválido." });
+  }
+
+  // Rate limit por usuário.
+  if (rateLimited("result", req.user.id, RESULT_RATE_BURST, RESULT_RATE_WINDOW)) {
+    return res.status(429).json({ error: "Muita atividade. Aguarde um instante." });
+  }
+
   try {
-    const baseXp = xpForResult({ cpm: Number(cpm) || 0, accuracy: Number(accuracy) || 0 });
+    const baseXp = xpForResult({ cpm: c, accuracy: a });
     const bonus = (await hasResultToday(req.user.id)) ? 0 : DAILY_BONUS;
-    const xpEarned = baseXp + bonus;
+    const rawXp = baseXp + bonus;
+    const earnedToday = await xpEarnedToday(req.user.id);
+    const remaining = Math.max(0, RESULT_DAILY_XP_CAP - earnedToday);
+    const xpEarned = Math.min(rawXp, remaining);
     const result = await createResult({
       userId: req.user.id,
       language: language ? String(language) : null,
       source: source ? String(source) : null,
-      cpm: Number(cpm) || 0,
-      wpm: Number(wpm) || 0,
-      accuracy: Number(accuracy) || 0,
-      errors: Math.round(Number(errors)) || 0,
-      elapsed: Number(elapsed) || 0,
+      cpm: c,
+      wpm: w,
+      accuracy: a,
+      errors: err,
+      elapsed: e,
       xp: xpEarned,
     });
     const xp = await grantXp(req.user.id, xpEarned);

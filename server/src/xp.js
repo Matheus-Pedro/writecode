@@ -19,3 +19,17 @@ export function xpForResult({ cpm, accuracy }) {
 }
 
 export const DAILY_BONUS = 25;
+
+// Limites de integridade para resultados enviados pelo cliente.
+// Um digitador real (recorde mundial ~280 PPM) fica longe destes tetos.
+export const RESULT_CPM_MAX = 2000; // ~400 PPM absoluto
+export const RESULT_WPM_MAX = 400;
+export const RESULT_ACCURACY_MAX = 1.0005; // fração, não percentual
+export const RESULT_ELAPSED_MIN = 0.2;
+export const RESULT_ELAPSED_MAX = 3600;
+export const CPM_WPM_TOLERANCE = 60; // |cpm - wpm*5| permitido (arredondamentos)
+// Teto de XP vindo de resultados por dia (antigrind; usuário legítimo não alcança).
+export const RESULT_DAILY_XP_CAP = 2000;
+// Rate limit por usuário em /api/results.
+export const RESULT_RATE_BURST = 6;
+export const RESULT_RATE_WINDOW = 10; // segundos
